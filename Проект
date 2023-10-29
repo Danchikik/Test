@@ -1,0 +1,94 @@
+import tkinter as tk
+from tkinter import ttk
+import sqlite3
+
+# Создание бд и таблицы
+conn = sqlite3.connect('employees.db')
+cursor = conn.cursor()
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS employees (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        phone TEXT,
+        email TEXT,
+        salary REAL
+    )
+''')
+conn.commit()
+
+
+# Функция добавления сотрудника
+def add_employee():
+    name = name_entry.get()
+    phone = phone_entry.get()
+    email = email_entry.get()
+    salary = salary_entry.get()
+
+    cursor.execute('INSERT INTO employees (name, phone, email, salary) VALUES (?, ?, ?, ?)', (name, phone, email, salary))
+    conn.commit()
+
+    # Очищаем поля ввода после добавления
+    name_entry.delete(0, tk.END)
+    phone_entry.delete(0, tk.END)
+    email_entry.delete(0, tk.END)
+    salary_entry.delete(0, tk.END)
+    
+    # Обновляем таблицу
+    update_table()
+
+
+# Функция обновления таблицы
+def update_table():
+    # Очищаем таблицу
+    for row in tree.get_children():
+        tree.delete(row)
+
+    # Получаем данные из бд
+    cursor.execute('SELECT * FROM employees')
+    rows = cursor.fetchall()
+
+    # Выводим данные в таблицу
+    for row in rows:
+        tree.insert('', tk.END, values=row)
+
+
+# Создание графического интерфейса
+root = tk.Tk()
+
+# Создание виджетов для ввода данных о сотруднике
+name_label = ttk.Label(root, text="ФИО:")
+name_label.pack()
+name_entry = ttk.Entry(root)
+name_entry.pack()
+
+phone_label = ttk.Label(root, text="Номер телефона:")
+phone_label.pack()
+phone_entry = ttk.Entry(root)
+phone_entry.pack()
+
+email_label = ttk.Label(root, text="Адрес электронной почты:")
+email_label.pack()
+email_entry = ttk.Entry(root)
+email_entry.pack()
+
+salary_label = ttk.Label(root, text="Заработная плата:")
+salary_label.pack()
+salary_entry = ttk.Entry(root)
+salary_entry.pack()
+
+add_button = ttk.Button(root, text="Добавить", command=add_employee)
+add_button.pack()
+
+# Создание виджета таблицы
+tree = ttk.Treeview(root, columns=('ID', 'Name', 'Phone', 'Email', 'Salary'))
+tree.heading('ID', text='ID')
+tree.heading('Name', text='Name')
+tree.heading('Phone', text='Phone')
+tree.heading('Email', text='Email')
+tree.heading('Salary', text='Salary')
+tree.pack()
+
+# Обновление таблицы при запуске программы
+update_table()
+
+root.mainloop()
